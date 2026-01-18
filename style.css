@@ -123,6 +123,10 @@
             line-height: 1;
             z-index: 15;
             white-space: nowrap;
+            text-align: right;
+            padding-top: 6px;
+            padding-right: 26px;
+            box-sizing: border-box;
         }
 
         /* --- Positions --- */
@@ -130,32 +134,32 @@
         /* Training */
         #name-training { left: 326px; top: 446px; width: 428px; height: 94px; }
         #box-training { left: 188px; top: 554px; width: 705px; height: 542px; padding: 18px 0 0; }
-        #text-training { left: 778px; top: 1096px; }
+        #text-training { left: 188px; top: 1096px; width: 705px; }
 
         /* Films */
         #name-films { left: 981px; top: 449px; width: 428px; height: 94px; }
         #box-films { left: 943px; top: 554px; width: 494px; height: 280px; padding: 17px 0 0; }
-        #text-films { left: 1331px; top: 834px; }
+        #text-films { left: 943px; top: 834px; width: 494px; }
 
         /* English */
         #name-english { left: 1659px; top: 446px; width: 428px; height: 94px; }
         #box-english { left: 1492px; top: 554px; width: 705px; height: 311px; padding: 17px 0 0; }
-        #text-english { left: 2094px; top: 864px; }
+        #text-english { left: 1492px; top: 864px; width: 705px; }
 
         /* Squash */
         #name-squash { left: 968px; top: 879px; width: 428px; height: 94px; }
         #box-squash { left: 936px; top: 984px; width: 492px; height: 112px; padding: 12px 0 0; }
-        #text-squash { left: 1324px; top: 1096px; }
+        #text-squash { left: 936px; top: 1096px; width: 492px; }
 
         /* Books */
         #name-books { left: 1502px; top: 924px; width: 230px; height: 94px; font-size: 65px; }
         #box-books { left: 1492px; top: 1029px; width: 264px; height: 67px; padding: 12px 0 0; }
-        #text-books { left: 1667px; top: 1096px; }
+        #text-books { left: 1492px; top: 1096px; width: 264px; }
 
         /* Games */
         #name-games { left: 1943px; top: 924px; width: 230px; height: 94px; font-size: 65px; }
         #box-games { left: 1933px; top: 1029px; width: 264px; height: 67px; padding: 12px 0 0; }
-        #text-games { left: 2108px; top: 1096px; }
+        #text-games { left: 1933px; top: 1096px; width: 264px; }
 
 
         /* --- Dot styles --- */
