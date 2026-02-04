@@ -1,79 +1,18 @@
-import { useEffect, useLayoutEffect } from 'react';
 import { useActivities } from './hooks/useActivities';
+import { useLayout } from './hooks/useLayout';
 import { ActivityGrid } from './components/ActivityGrid';
+import { ActivitySection } from './components/ActivitySection';
 import './index.css';
 
-const BASE_WIDTH = 2400;
-const BASE_HEIGHT = 1300;
-const BASE_HEADER_HEIGHT = 380;
-const BASE_HEADER_FONT = 285;
-const BASE_FOOTER_HEIGHT = 64;
-const BASE_FOOTER_FONT = 16;
-const MOBILE_BREAKPOINT = 1200;
-
+/**
+ * Main application component
+ * Renders the Year Tracker 2026 habit tracking interface
+ */
 function App() {
   const { activities, progress, loading, error, toggleProgress, getProgressCount } = useActivities();
 
-  useLayoutEffect(() => {
-    // Call immediately (synchronous)
-    updateLayout();
-
-    // Call again after a tiny delay to catch any late renders
-    const timeoutId = setTimeout(() => {
-      updateLayout();
-    }, 0);
-
-    window.addEventListener('resize', updateLayout);
-
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('resize', updateLayout);
-    };
-  }, []);
-
-  // Additional safety check after mount
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      updateLayout();
-    }, 10);
-
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  function updateLayout() {
-    const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
-    document.body.classList.toggle('mobile-layout', isMobile);
-
-    const wrapper = document.querySelector('.canvas-wrapper');
-    const canvas = document.querySelector('.canvas-area');
-
-    if (!wrapper || !canvas) return;
-
-    if (isMobile) {
-      wrapper.style.width = '';
-      wrapper.style.height = '';
-      canvas.style.transform = '';
-      document.documentElement.style.removeProperty('--header-height');
-      document.documentElement.style.removeProperty('--header-font-size');
-      document.documentElement.style.removeProperty('--footer-height');
-      document.documentElement.style.removeProperty('--footer-font-size');
-      return;
-    }
-
-    const padding = 32;
-    const availableWidth = window.innerWidth - padding;
-    const availableHeight = window.innerHeight - padding;
-    const totalBaseHeight = BASE_HEIGHT + BASE_FOOTER_HEIGHT;
-    const scale = Math.min(1, availableWidth / BASE_WIDTH, availableHeight / totalBaseHeight);
-
-    wrapper.style.width = `${BASE_WIDTH * scale}px`;
-    wrapper.style.height = `${BASE_HEIGHT * scale}px`;
-    canvas.style.transform = `scale(${scale})`;
-    document.documentElement.style.setProperty('--header-height', `${BASE_HEADER_HEIGHT * scale}px`);
-    document.documentElement.style.setProperty('--header-font-size', `${BASE_HEADER_FONT * scale}px`);
-    document.documentElement.style.setProperty('--footer-height', `${BASE_FOOTER_HEIGHT * scale}px`);
-    document.documentElement.style.setProperty('--footer-font-size', `${BASE_FOOTER_FONT * scale}px`);
-  }
+  // Handle responsive layout scaling
+  useLayout();
 
   if (loading) {
     return <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>;
@@ -83,7 +22,7 @@ function App() {
     return <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>Error: {error}</div>;
   }
 
-  // Group activities by category
+  // Find activities by key
   const training = activities.find(a => a.key === 'training');
   const english = activities.find(a => a.key === 'english');
   const squash = activities.find(a => a.key === 'squash');
@@ -105,23 +44,17 @@ function App() {
         <div className="canvas-area">
 
           {/* Training */}
-          {training && (
-            <>
-              <div id="name-training" className="name-block">training</div>
-              <div id="box-training" className="circles-block">
-                <ActivityGrid
-                  activity={training}
-                  progress={progress[training.key] || []}
-                  onToggle={toggleProgress}
-                />
-              </div>
-              <div id="text-training" className="meta-text">
-                {getProgressCount(training.key)}/{training.count}
-              </div>
-            </>
-          )}
+          <ActivitySection
+            activity={training}
+            progress={progress[training?.key] || []}
+            onToggle={toggleProgress}
+            getProgressCount={getProgressCount}
+            nameId="name-training"
+            boxId="box-training"
+            textId="text-training"
+          />
 
-          {/* Films */}
+          {/* Films - Special layout with cinema zone */}
           <div id="name-films" className="name-block">films</div>
           <div id="box-films" className="circles-block">
             <div className="cinema-zone" id="cinema-zone">
@@ -152,72 +85,48 @@ function App() {
           </div>
 
           {/* English */}
-          {english && (
-            <>
-              <div id="name-english" className="name-block">english</div>
-              <div id="box-english" className="circles-block">
-                <ActivityGrid
-                  activity={english}
-                  progress={progress[english.key] || []}
-                  onToggle={toggleProgress}
-                />
-              </div>
-              <div id="text-english" className="meta-text">
-                {getProgressCount(english.key)}/{english.count}
-              </div>
-            </>
-          )}
+          <ActivitySection
+            activity={english}
+            progress={progress[english?.key] || []}
+            onToggle={toggleProgress}
+            getProgressCount={getProgressCount}
+            nameId="name-english"
+            boxId="box-english"
+            textId="text-english"
+          />
 
           {/* Squash */}
-          {squash && (
-            <>
-              <div id="name-squash" className="name-block">squash</div>
-              <div id="box-squash" className="circles-block">
-                <ActivityGrid
-                  activity={squash}
-                  progress={progress[squash.key] || []}
-                  onToggle={toggleProgress}
-                />
-              </div>
-              <div id="text-squash" className="meta-text">
-                {getProgressCount(squash.key)}/{squash.count}
-              </div>
-            </>
-          )}
+          <ActivitySection
+            activity={squash}
+            progress={progress[squash?.key] || []}
+            onToggle={toggleProgress}
+            getProgressCount={getProgressCount}
+            nameId="name-squash"
+            boxId="box-squash"
+            textId="text-squash"
+          />
 
           {/* Books */}
-          {books && (
-            <>
-              <div id="name-books" className="name-block">books</div>
-              <div id="box-books" className="circles-block">
-                <ActivityGrid
-                  activity={books}
-                  progress={progress[books.key] || []}
-                  onToggle={toggleProgress}
-                />
-              </div>
-              <div id="text-books" className="meta-text">
-                {getProgressCount(books.key)}/{books.count}
-              </div>
-            </>
-          )}
+          <ActivitySection
+            activity={books}
+            progress={progress[books?.key] || []}
+            onToggle={toggleProgress}
+            getProgressCount={getProgressCount}
+            nameId="name-books"
+            boxId="box-books"
+            textId="text-books"
+          />
 
           {/* Games */}
-          {games && (
-            <>
-              <div id="name-games" className="name-block">games</div>
-              <div id="box-games" className="circles-block">
-                <ActivityGrid
-                  activity={games}
-                  progress={progress[games.key] || []}
-                  onToggle={toggleProgress}
-                />
-              </div>
-              <div id="text-games" className="meta-text">
-                {getProgressCount(games.key)}/{games.count}
-              </div>
-            </>
-          )}
+          <ActivitySection
+            activity={games}
+            progress={progress[games?.key] || []}
+            onToggle={toggleProgress}
+            getProgressCount={getProgressCount}
+            nameId="name-games"
+            boxId="box-games"
+            textId="text-games"
+          />
 
         </div>
       </div>

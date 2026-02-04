@@ -1,9 +1,13 @@
 import express from 'express';
-import { queries } from '../database.js';
+import { queries } from '../db/database.js';
 
 const router = express.Router();
 
-// GET /api/activities - Get all activities
+/**
+ * GET /api/activities
+ * Retrieves all activity configurations from the database
+ * @returns {Array} Array of activity objects
+ */
 router.get('/activities', (req, res) => {
     try {
         const activities = queries.getAllActivities();
@@ -14,7 +18,11 @@ router.get('/activities', (req, res) => {
     }
 });
 
-// GET /api/progress - Get all progress
+/**
+ * GET /api/progress
+ * Retrieves all user progress data grouped by activity
+ * @returns {Object} Object with activity keys as properties, each containing array of completed dot indices
+ */
 router.get('/progress', (req, res) => {
     try {
         const progress = queries.getAllProgress();
@@ -35,15 +43,40 @@ router.get('/progress', (req, res) => {
     }
 });
 
-// POST /api/progress - Toggle progress
+/**
+ * POST /api/progress
+ * Toggles progress for a specific activity dot
+ * @body {string} activityKey - The activity identifier (e.g., 'training', 'english')
+ * @body {number} dotIndex - The dot index (0-based integer)
+ * @body {boolean} isFilled - Whether the dot should be filled (true) or unfilled (false)
+ * @returns {Object} Success response with updated state
+ */
 router.post('/progress', (req, res) => {
     try {
         const { activityKey, dotIndex, isFilled } = req.body;
 
+        // Validate required fields
         if (!activityKey || dotIndex === undefined || isFilled === undefined) {
-            return res.status(400).json({ error: 'Missing required fields' });
+            return res.status(400).json({
+                error: 'Missing required fields',
+                required: ['activityKey', 'dotIndex', 'isFilled']
+            });
         }
 
+        // Validate types
+        if (typeof activityKey !== 'string') {
+            return res.status(400).json({ error: 'activityKey must be a string' });
+        }
+
+        if (typeof dotIndex !== 'number' || !Number.isInteger(dotIndex) || dotIndex < 0) {
+            return res.status(400).json({ error: 'dotIndex must be a non-negative integer' });
+        }
+
+        if (typeof isFilled !== 'boolean') {
+            return res.status(400).json({ error: 'isFilled must be a boolean' });
+        }
+
+        // Update progress
         if (isFilled) {
             queries.addProgress(activityKey, dotIndex);
         } else {
@@ -57,11 +90,24 @@ router.post('/progress', (req, res) => {
     }
 });
 
-// DELETE /api/progress/:activityKey/:dotIndex - Delete specific progress
+/**
+ * DELETE /api/progress/:activityKey/:dotIndex
+ * Deletes progress for a specific activity dot
+ * @param {string} activityKey - The activity identifier
+ * @param {string} dotIndex - The dot index (will be parsed to integer)
+ * @returns {Object} Success response
+ */
 router.delete('/progress/:activityKey/:dotIndex', (req, res) => {
     try {
         const { activityKey, dotIndex } = req.params;
-        queries.removeProgress(activityKey, parseInt(dotIndex));
+
+        const parsedIndex = parseInt(dotIndex, 10);
+
+        if (isNaN(parsedIndex) || parsedIndex < 0) {
+            return res.status(400).json({ error: 'dotIndex must be a valid non-negative integer' });
+        }
+
+        queries.removeProgress(activityKey, parsedIndex);
         res.json({ success: true });
     } catch (error) {
         console.error('Error deleting progress:', error);

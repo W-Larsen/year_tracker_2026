@@ -1,5 +1,11 @@
 import PropTypes from 'prop-types';
 
+/**
+ * Individual clickable dot component
+ * @param {object} props
+ * @param {boolean} props.filled - Whether the dot is filled/completed
+ * @param {function} props.onClick - Click handler function
+ */
 export function Dot({ filled, onClick }) {
     return (
         <div
@@ -10,6 +16,6 @@ export function Dot({ filled, onClick }) {
 }
 
 Dot.propTypes = {
-    filled: Boolean,
+    filled: PropTypes.bool,
     onClick: PropTypes.func.isRequired
 };

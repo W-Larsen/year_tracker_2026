@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import activitiesRouter from './routes/activities.js';
-import { waitForDb } from './database.js';
+import { waitForDb } from './db/database.js';
 
 dotenv.config();
 
@@ -27,10 +27,25 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', message: 'Year Tracker 2026 API is running' });
 });
 
+// 404 handler for unknown routes
+app.use((req, res) => {
+    res.status(404).json({
+        error: 'Route not found',
+        path: req.path,
+        method: req.method
+    });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
+
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+
+    res.status(500).json({
+        error: 'Internal server error',
+        ...(isDevelopment && { details: err.message })
+    });
 });
 
 // Start server after database is initialized
