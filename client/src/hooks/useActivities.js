@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { API_URL } from '../config';
 
-const API_URL = 'http://localhost:3001/api';
+const API_BASE = `${API_URL}/api`;
 
 export function useActivities() {
     const [activities, setActivities] = useState([]);
@@ -17,8 +18,8 @@ export function useActivities() {
         try {
             setLoading(true);
             const [activitiesRes, progressRes] = await Promise.all([
-                fetch(`${API_URL}/activities`),
-                fetch(`${API_URL}/progress`)
+                fetch(`${API_BASE}/activities`),
+                fetch(`${API_BASE}/progress`)
             ]);
 
             if (!activitiesRes.ok || !progressRes.ok) {
@@ -61,7 +62,7 @@ export function useActivities() {
 
         // Send to backend
         try {
-            const response = await fetch(`${API_URL}/progress`, {
+            const response = await fetch(`${API_BASE}/progress`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
