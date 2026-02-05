@@ -14,6 +14,15 @@ let db;
 async function initDatabase() {
     const SQL = await initSqlJs();
 
+    // Check if we should reset the database
+    const shouldReset = process.env.RESET_DB === 'true';
+
+    if (shouldReset && existsSync(dbPath)) {
+        const { unlinkSync } = await import('fs');
+        unlinkSync(dbPath);
+        console.log('🗑️ Database reset requested - deleted existing database');
+    }
+
     // Load existing database or create new one
     if (existsSync(dbPath)) {
         const buffer = readFileSync(dbPath);
@@ -53,7 +62,7 @@ async function initDatabase() {
         const activities = [
             { key: 'training', name: 'Training', count: 156, grid_id: 'grid-training' },
             { key: 'english', name: 'English', count: 80, grid_id: 'grid-english' },
-            { key: 'squash', name: 'Squash', count: 20, grid_id: 'grid-squash' },
+            { key: 'squash', name: 'Squash', count: 20, grid_id: 'grid-activities' },
             { key: 'books', name: 'Books', count: 5, grid_id: 'grid-books' },
             { key: 'games', name: 'Games', count: 5, grid_id: 'grid-games' },
             { key: 'films-cinema', name: 'Films (Cinema)', count: 20, grid_id: 'grid-films-cinema' },

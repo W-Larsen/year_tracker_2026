@@ -25,7 +25,7 @@ function App() {
   // Find activities by key
   const training = activities.find(a => a.key === 'training');
   const english = activities.find(a => a.key === 'english');
-  const squash = activities.find(a => a.key === 'squash');
+  const activitiesData = activities.find(a => a.key === 'squash');
   const books = activities.find(a => a.key === 'books');
   const games = activities.find(a => a.key === 'games');
   const filmsCinema = activities.find(a => a.key === 'films-cinema');
@@ -95,15 +95,18 @@ function App() {
             textId="text-english"
           />
 
-          {/* Squash */}
+          {/* Activities (Squash, Padel, etc) */}
           <ActivitySection
-            activity={squash}
-            progress={progress[squash?.key] || []}
+            activity={activitiesData}
+            progress={progress[activitiesData?.key] || []}
             onToggle={toggleProgress}
             getProgressCount={getProgressCount}
-            nameId="name-squash"
-            boxId="box-squash"
-            textId="text-squash"
+            nameId="name-activities"
+            boxId="box-activities"
+            textId="text-activities"
+            customName="activities"
+            subtitleId="subtitle-activities"
+            subtitleText="(squash, padel, etc)"
           />
 
           {/* Books */}

@@ -12,6 +12,9 @@ import { ActivityGrid } from './ActivityGrid';
  * @param {string} props.nameId - ID for the name block element
  * @param {string} props.boxId - ID for the box element
  * @param {string} props.textId - ID for the text counter element
+ * @param {string} [props.customName] - Optional custom name override (defaults to activity.name)
+ * @param {string} [props.subtitleId] - Optional ID for subtitle element
+ * @param {string} [props.subtitleText] - Optional subtitle text to display
  */
 export function ActivitySection({
     activity,
@@ -20,15 +23,23 @@ export function ActivitySection({
     getProgressCount,
     nameId,
     boxId,
-    textId
+    textId,
+    customName,
+    subtitleId,
+    subtitleText
 }) {
     if (!activity) return null;
 
     return (
         <>
             <div id={nameId} className="name-block">
-                {activity.name.toLowerCase()}
+                {customName ? customName.toLowerCase() : activity.name.toLowerCase()}
             </div>
+            {subtitleId && subtitleText && (
+                <div id={subtitleId}>
+                    {subtitleText}
+                </div>
+            )}
             <div id={boxId} className="circles-block">
                 <ActivityGrid
                     activity={activity}
@@ -55,4 +66,7 @@ ActivitySection.propTypes = {
     nameId: PropTypes.string.isRequired,
     boxId: PropTypes.string.isRequired,
     textId: PropTypes.string.isRequired,
+    customName: PropTypes.string,
+    subtitleId: PropTypes.string,
+    subtitleText: PropTypes.string,
 };

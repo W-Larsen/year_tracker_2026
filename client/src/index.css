@@ -203,15 +203,29 @@ body {
   width: 705px;
 }
 
-/* Squash */
-#name-squash {
+/* Activities */
+#name-activities {
   left: 968px;
-  top: 879px;
+  top: 869px;
   width: 428px;
   height: 94px;
+  padding-bottom: 20px;
 }
 
-#box-squash {
+#subtitle-activities {
+  position: absolute;
+  left: 1110px;
+  top: 935px;
+  font-family: 'Andika', sans-serif;
+  font-size: 18px;
+  color: #746E6E;
+  font-weight: normal;
+  line-height: 1;
+  z-index: 15;
+  white-space: nowrap;
+}
+
+#box-activities {
   left: 936px;
   top: 984px;
   width: 492px;
@@ -219,7 +233,7 @@ body {
   padding: 12px 0 0;
 }
 
-#text-squash {
+#text-activities {
   left: 936px;
   top: 1096px;
   width: 492px;
@@ -372,8 +386,8 @@ body {
   row-gap: 7px;
 }
 
-/* Squash: 10 columns */
-#grid-squash {
+/* Activities: 10 columns */
+#grid-activities {
   grid-template-columns: repeat(10, 1fr);
   column-gap: 5px;
   row-gap: 7px;
@@ -450,7 +464,7 @@ body.mobile-layout .dot {
 
 body.mobile-layout #grid-training,
 body.mobile-layout #grid-english,
-body.mobile-layout #grid-squash,
+body.mobile-layout #grid-activities,
 body.mobile-layout #grid-books,
 body.mobile-layout #grid-games,
 body.mobile-layout #grid-films-cinema,
