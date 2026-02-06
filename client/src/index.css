@@ -285,6 +285,47 @@ body {
   width: 264px;
 }
 
+/* Last Updated Labels */
+.last-updated {
+  position: absolute;
+  font-family: 'Andika', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #746E6E;
+  z-index: 15;
+  white-space: nowrap;
+}
+
+#updated-training {
+  left: 213px;
+  top: 1094px;
+}
+
+#updated-films {
+  left: 968px;
+  top: 833px;
+}
+
+#updated-activities {
+  left: 971px;
+  top: 1094px;
+}
+
+#updated-english {
+  left: 1523px;
+  top: 864px;
+}
+
+#updated-books {
+  left: 1523px;
+  top: 1094px;
+}
+
+#updated-games {
+  left: 1957px;
+  top: 1094px;
+}
+
 /* Dot styles */
 
 .grid-container {

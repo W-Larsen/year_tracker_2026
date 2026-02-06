@@ -139,6 +139,29 @@ export const queries = {
             console.error('Error removing progress:', error);
             return false;
         }
+    },
+
+    getLastUpdatedByActivity: () => {
+        // Get the most recent created_at for each activity group
+        // films-cinema and films-home are combined into 'films'
+        const result = db.exec(`
+            SELECT 
+                CASE 
+                    WHEN activity_key IN ('films-cinema', 'films-home') THEN 'films'
+                    ELSE activity_key 
+                END as activity_group,
+                MAX(created_at) as last_updated
+            FROM progress
+            GROUP BY activity_group
+        `);
+
+        if (!result[0]) return {};
+
+        const lastUpdated = {};
+        for (const row of result[0].values) {
+            lastUpdated[row[0]] = row[1];
+        }
+        return lastUpdated;
     }
 };
 

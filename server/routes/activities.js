@@ -44,6 +44,21 @@ router.get('/progress', (req, res) => {
 });
 
 /**
+ * GET /api/last-updated
+ * Retrieves the last updated timestamp for each activity group
+ * @returns {Object} Object with activity keys and their last updated timestamps
+ */
+router.get('/last-updated', (req, res) => {
+    try {
+        const lastUpdated = queries.getLastUpdatedByActivity();
+        res.json(lastUpdated);
+    } catch (error) {
+        console.error('Error fetching last updated:', error);
+        res.status(500).json({ error: 'Failed to fetch last updated' });
+    }
+});
+
+/**
  * POST /api/progress
  * Toggles progress for a specific activity dot
  * @body {string} activityKey - The activity identifier (e.g., 'training', 'english')

@@ -5,11 +5,25 @@ import { ActivitySection } from './components/ActivitySection';
 import './index.css';
 
 /**
+ * Format ISO date string to dd/MM/YY format
+ * @param {string|null} isoDate - ISO date string
+ * @returns {string} Formatted date or empty string
+ */
+function formatDate(isoDate) {
+  if (!isoDate) return '';
+  const date = new Date(isoDate);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
+}
+
+/**
  * Main application component
  * Renders the Year Tracker 2026 habit tracking interface
  */
 function App() {
-  const { activities, progress, loading, error, toggleProgress, getProgressCount } = useActivities();
+  const { activities, progress, loading, error, toggleProgress, getProgressCount, getLastUpdated } = useActivities();
 
   // Handle responsive layout scaling
   useLayout();
@@ -34,6 +48,10 @@ function App() {
   const filmsTotal = (filmsCinema?.count || 0) + (filmsHome?.count || 0);
   const filmsTotalProgress = getProgressCount('films-cinema') + getProgressCount('films-home');
 
+  // Get last updated for films (combined group)
+  const filmsLastUpdated = getLastUpdated('films-cinema');
+  const filmsFormattedDate = formatDate(filmsLastUpdated);
+
   return (
     <>
       <div className="header-bar">
@@ -52,6 +70,8 @@ function App() {
             nameId="name-training"
             boxId="box-training"
             textId="text-training"
+            updatedId="updated-training"
+            lastUpdated={getLastUpdated('training')}
           />
 
           {/* Films - Special layout with cinema zone */}
@@ -83,6 +103,11 @@ function App() {
           <div id="text-films" className="meta-text">
             {filmsTotalProgress}/{filmsTotal}
           </div>
+          {filmsFormattedDate && (
+            <div id="updated-films" className="last-updated">
+              updated on {filmsFormattedDate}
+            </div>
+          )}
 
           {/* English */}
           <ActivitySection
@@ -93,6 +118,8 @@ function App() {
             nameId="name-english"
             boxId="box-english"
             textId="text-english"
+            updatedId="updated-english"
+            lastUpdated={getLastUpdated('english')}
           />
 
           {/* Activities (Squash, Padel, etc) */}
@@ -107,6 +134,8 @@ function App() {
             customName="activities"
             subtitleId="subtitle-activities"
             subtitleText="(squash, padel, etc)"
+            updatedId="updated-activities"
+            lastUpdated={getLastUpdated('squash')}
           />
 
           {/* Books */}
@@ -118,6 +147,8 @@ function App() {
             nameId="name-books"
             boxId="box-books"
             textId="text-books"
+            updatedId="updated-books"
+            lastUpdated={getLastUpdated('books')}
           />
 
           {/* Games */}
@@ -129,6 +160,8 @@ function App() {
             nameId="name-games"
             boxId="box-games"
             textId="text-games"
+            updatedId="updated-games"
+            lastUpdated={getLastUpdated('games')}
           />
 
         </div>

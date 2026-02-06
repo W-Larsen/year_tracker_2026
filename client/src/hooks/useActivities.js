@@ -6,6 +6,7 @@ const API_BASE = `${API_URL}/api`;
 export function useActivities() {
     const [activities, setActivities] = useState([]);
     const [progress, setProgress] = useState({});
+    const [lastUpdated, setLastUpdated] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -17,20 +18,23 @@ export function useActivities() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [activitiesRes, progressRes] = await Promise.all([
+            const [activitiesRes, progressRes, lastUpdatedRes] = await Promise.all([
                 fetch(`${API_BASE}/activities`),
-                fetch(`${API_BASE}/progress`)
+                fetch(`${API_BASE}/progress`),
+                fetch(`${API_BASE}/last-updated`)
             ]);
 
-            if (!activitiesRes.ok || !progressRes.ok) {
+            if (!activitiesRes.ok || !progressRes.ok || !lastUpdatedRes.ok) {
                 throw new Error('Failed to fetch data');
             }
 
             const activitiesData = await activitiesRes.json();
             const progressData = await progressRes.json();
+            const lastUpdatedData = await lastUpdatedRes.json();
 
             setActivities(activitiesData);
             setProgress(progressData);
+            setLastUpdated(lastUpdatedData);
             setError(null);
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -59,6 +63,11 @@ export function useActivities() {
         }
 
         setProgress(newProgress);
+
+        // Update lastUpdated optimistically with current timestamp
+        const now = new Date().toISOString();
+        const groupKey = (activityKey === 'films-cinema' || activityKey === 'films-home') ? 'films' : activityKey;
+        setLastUpdated(prev => ({ ...prev, [groupKey]: now }));
 
         // Send to backend
         try {
@@ -89,13 +98,21 @@ export function useActivities() {
         return progress[activityKey]?.length || 0;
     };
 
+    const getLastUpdated = (activityKey) => {
+        // Map activity keys to their group keys for lookup
+        const groupKey = (activityKey === 'films-cinema' || activityKey === 'films-home') ? 'films' : activityKey;
+        return lastUpdated[groupKey] || null;
+    };
+
     return {
         activities,
         progress,
+        lastUpdated,
         loading,
         error,
         toggleProgress,
         isProgressFilled,
-        getProgressCount
+        getProgressCount,
+        getLastUpdated
     };
 }
