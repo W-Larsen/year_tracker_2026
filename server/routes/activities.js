@@ -8,9 +8,9 @@ const router = express.Router();
  * Retrieves all activity configurations from the database
  * @returns {Array} Array of activity objects
  */
-router.get('/activities', (req, res) => {
+router.get('/activities', async (req, res) => {
     try {
-        const activities = queries.getAllActivities();
+        const activities = await queries.getAllActivities();
         res.json(activities);
     } catch (error) {
         console.error('Error fetching activities:', error);
@@ -23,9 +23,9 @@ router.get('/activities', (req, res) => {
  * Retrieves all user progress data grouped by activity
  * @returns {Object} Object with activity keys as properties, each containing array of completed dot indices
  */
-router.get('/progress', (req, res) => {
+router.get('/progress', async (req, res) => {
     try {
-        const progress = queries.getAllProgress();
+        const progress = await queries.getAllProgress();
 
         // Transform to match frontend format: { activityKey: [indices] }
         const progressByActivity = progress.reduce((acc, item) => {
@@ -48,9 +48,9 @@ router.get('/progress', (req, res) => {
  * Retrieves the last updated timestamp for each activity group
  * @returns {Object} Object with activity keys and their last updated timestamps
  */
-router.get('/last-updated', (req, res) => {
+router.get('/last-updated', async (req, res) => {
     try {
-        const lastUpdated = queries.getLastUpdatedByActivity();
+        const lastUpdated = await queries.getLastUpdatedByActivity();
         res.json(lastUpdated);
     } catch (error) {
         console.error('Error fetching last updated:', error);
@@ -66,7 +66,7 @@ router.get('/last-updated', (req, res) => {
  * @body {boolean} isFilled - Whether the dot should be filled (true) or unfilled (false)
  * @returns {Object} Success response with updated state
  */
-router.post('/progress', (req, res) => {
+router.post('/progress', async (req, res) => {
     try {
         const { activityKey, dotIndex, isFilled } = req.body;
 
@@ -93,9 +93,9 @@ router.post('/progress', (req, res) => {
 
         // Update progress
         if (isFilled) {
-            queries.addProgress(activityKey, dotIndex);
+            await queries.addProgress(activityKey, dotIndex);
         } else {
-            queries.removeProgress(activityKey, dotIndex);
+            await queries.removeProgress(activityKey, dotIndex);
         }
 
         res.json({ success: true, activityKey, dotIndex, isFilled });
@@ -112,7 +112,7 @@ router.post('/progress', (req, res) => {
  * @param {string} dotIndex - The dot index (will be parsed to integer)
  * @returns {Object} Success response
  */
-router.delete('/progress/:activityKey/:dotIndex', (req, res) => {
+router.delete('/progress/:activityKey/:dotIndex', async (req, res) => {
     try {
         const { activityKey, dotIndex } = req.params;
 
@@ -122,7 +122,7 @@ router.delete('/progress/:activityKey/:dotIndex', (req, res) => {
             return res.status(400).json({ error: 'dotIndex must be a valid non-negative integer' });
         }
 
-        queries.removeProgress(activityKey, parsedIndex);
+        await queries.removeProgress(activityKey, parsedIndex);
         res.json({ success: true });
     } catch (error) {
         console.error('Error deleting progress:', error);

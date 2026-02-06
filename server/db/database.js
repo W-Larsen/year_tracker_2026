@@ -1,125 +1,99 @@
-import initSqlJs from 'sql.js';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { createClient } from '@libsql/client';
 
-const dbPath = join(__dirname, 'tracker.db');
+// Initialize Turso client
+const client = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-let db;
-
-// Initialize database
+// Initialize database tables
 async function initDatabase() {
-    const SQL = await initSqlJs();
+    try {
+        // Create tables
+        await client.execute(`
+            CREATE TABLE IF NOT EXISTS activities (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                key TEXT UNIQUE NOT NULL,
+                name TEXT NOT NULL,
+                count INTEGER NOT NULL,
+                grid_id TEXT NOT NULL
+            )
+        `);
 
-    // Check if we should reset the database
-    const shouldReset = process.env.RESET_DB === 'true';
+        await client.execute(`
+            CREATE TABLE IF NOT EXISTS progress (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                activity_key TEXT NOT NULL,
+                dot_index INTEGER NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(activity_key, dot_index)
+            )
+        `);
 
-    if (shouldReset && existsSync(dbPath)) {
-        const { unlinkSync } = await import('fs');
-        unlinkSync(dbPath);
-        console.log('🗑️ Database reset requested - deleted existing database');
-    }
+        // Seed initial activities if table is empty
+        const result = await client.execute('SELECT COUNT(*) as count FROM activities');
+        const count = result.rows[0]?.count || 0;
 
-    // Load existing database or create new one
-    if (existsSync(dbPath)) {
-        const buffer = readFileSync(dbPath);
-        db = new SQL.Database(buffer);
-        console.log('📂 Loaded existing database');
-    } else {
-        db = new SQL.Database();
-        console.log('🆕 Created new database');
-    }
+        if (count === 0) {
+            const activities = [
+                { key: 'training', name: 'Training', count: 156, grid_id: 'grid-training' },
+                { key: 'english', name: 'English', count: 80, grid_id: 'grid-english' },
+                { key: 'squash', name: 'Squash', count: 20, grid_id: 'grid-activities' },
+                { key: 'books', name: 'Books', count: 5, grid_id: 'grid-books' },
+                { key: 'games', name: 'Games', count: 5, grid_id: 'grid-games' },
+                { key: 'films-cinema', name: 'Films (Cinema)', count: 20, grid_id: 'grid-films-cinema' },
+                { key: 'films-home', name: 'Films (Home)', count: 30, grid_id: 'grid-films-home' }
+            ];
 
-    // Create tables
-    db.run(`
-    CREATE TABLE IF NOT EXISTS activities (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      key TEXT UNIQUE NOT NULL,
-      name TEXT NOT NULL,
-      count INTEGER NOT NULL,
-      grid_id TEXT NOT NULL
-    )
-  `);
+            for (const activity of activities) {
+                await client.execute({
+                    sql: 'INSERT INTO activities (key, name, count, grid_id) VALUES (?, ?, ?, ?)',
+                    args: [activity.key, activity.name, activity.count, activity.grid_id]
+                });
+            }
 
-    db.run(`
-    CREATE TABLE IF NOT EXISTS progress (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      activity_key TEXT NOT NULL,
-      dot_index INTEGER NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(activity_key, dot_index)
-    )
-  `);
-
-    // Seed initial activities if table is empty
-    const result = db.exec('SELECT COUNT(*) as count FROM activities');
-    const count = result[0]?.values[0]?.[0] || 0;
-
-    if (count === 0) {
-        const activities = [
-            { key: 'training', name: 'Training', count: 156, grid_id: 'grid-training' },
-            { key: 'english', name: 'English', count: 80, grid_id: 'grid-english' },
-            { key: 'squash', name: 'Squash', count: 20, grid_id: 'grid-activities' },
-            { key: 'books', name: 'Books', count: 5, grid_id: 'grid-books' },
-            { key: 'games', name: 'Games', count: 5, grid_id: 'grid-games' },
-            { key: 'films-cinema', name: 'Films (Cinema)', count: 20, grid_id: 'grid-films-cinema' },
-            { key: 'films-home', name: 'Films (Home)', count: 30, grid_id: 'grid-films-home' }
-        ];
-
-        for (const activity of activities) {
-            db.run(
-                'INSERT INTO activities (key, name, count, grid_id) VALUES (?, ?, ?, ?)',
-                [activity.key, activity.name, activity.count, activity.grid_id]
-            );
+            console.log('✅ Database seeded with initial activities');
         }
 
-        saveDatabase();
-        console.log('✅ Database seeded with initial activities');
+        console.log('✅ Connected to Turso database');
+    } catch (error) {
+        console.error('❌ Failed to initialize database:', error);
+        throw error;
     }
 }
 
-// Save database to file
-function saveDatabase() {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    writeFileSync(dbPath, buffer);
-}
-
-// Query helpers
+// Query helpers (all async for Turso)
 export const queries = {
-    getAllActivities: () => {
-        const result = db.exec('SELECT * FROM activities ORDER BY id');
-        if (!result[0]) return [];
-        return result[0].values.map(row => ({
-            id: row[0],
-            key: row[1],
-            name: row[2],
-            count: row[3],
-            grid_id: row[4]
+    getAllActivities: async () => {
+        const result = await client.execute('SELECT * FROM activities ORDER BY id');
+        return result.rows.map(row => ({
+            id: row.id,
+            key: row.key,
+            name: row.name,
+            count: row.count,
+            grid_id: row.grid_id
         }));
     },
 
-    getAllProgress: () => {
-        const result = db.exec('SELECT * FROM progress');
-        if (!result[0]) return [];
-        return result[0].values.map(row => ({
-            id: row[0],
-            activity_key: row[1],
-            dot_index: row[2],
-            created_at: row[3]
+    getAllProgress: async () => {
+        const result = await client.execute('SELECT * FROM progress');
+        return result.rows.map(row => ({
+            id: row.id,
+            activity_key: row.activity_key,
+            dot_index: row.dot_index,
+            created_at: row.created_at
         }));
     },
 
-    addProgress: (activityKey, dotIndex) => {
+    addProgress: async (activityKey, dotIndex) => {
         try {
-            db.run(
-                'INSERT OR IGNORE INTO progress (activity_key, dot_index) VALUES (?, ?)',
-                [activityKey, dotIndex]
-            );
-            saveDatabase();
+            await client.execute({
+                sql: 'INSERT OR IGNORE INTO progress (activity_key, dot_index) VALUES (?, ?)',
+                args: [activityKey, dotIndex]
+            });
             return true;
         } catch (error) {
             console.error('Error adding progress:', error);
@@ -127,13 +101,12 @@ export const queries = {
         }
     },
 
-    removeProgress: (activityKey, dotIndex) => {
+    removeProgress: async (activityKey, dotIndex) => {
         try {
-            db.run(
-                'DELETE FROM progress WHERE activity_key = ? AND dot_index = ?',
-                [activityKey, dotIndex]
-            );
-            saveDatabase();
+            await client.execute({
+                sql: 'DELETE FROM progress WHERE activity_key = ? AND dot_index = ?',
+                args: [activityKey, dotIndex]
+            });
             return true;
         } catch (error) {
             console.error('Error removing progress:', error);
@@ -141,10 +114,8 @@ export const queries = {
         }
     },
 
-    getLastUpdatedByActivity: () => {
-        // Get the most recent created_at for each activity group
-        // films-cinema and films-home are combined into 'films'
-        const result = db.exec(`
+    getLastUpdatedByActivity: async () => {
+        const result = await client.execute(`
             SELECT 
                 CASE 
                     WHEN activity_key IN ('films-cinema', 'films-home') THEN 'films'
@@ -155,11 +126,9 @@ export const queries = {
             GROUP BY activity_group
         `);
 
-        if (!result[0]) return {};
-
         const lastUpdated = {};
-        for (const row of result[0].values) {
-            lastUpdated[row[0]] = row[1];
+        for (const row of result.rows) {
+            lastUpdated[row.activity_group] = row.last_updated;
         }
         return lastUpdated;
     }
@@ -169,4 +138,4 @@ export const queries = {
 const dbInitPromise = initDatabase();
 
 export const waitForDb = () => dbInitPromise;
-export default db;
+export default client;
