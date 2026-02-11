@@ -14,6 +14,12 @@ Track your progress across multiple activities:
 
 Each activity displays a "last updated" timestamp showing when progress was last made.
 
+### Interactive Layout
+- **Resizable blocks** — drag corners to resize any activity block (name, dots, counters all scale proportionally)
+- **Movable blocks** — drag to reposition blocks anywhere on the canvas
+- **Collision detection** — blocks highlight red when overlapping; releasing reverts to previous position
+- **Minimum size limit** — blocks can't shrink below 50% of original size
+
 ## Tech Stack
 
 ### Frontend
@@ -35,10 +41,12 @@ year_tracker_2026/
 │   │   ├── components/
 │   │   │   ├── Dot.jsx              # Individual clickable dot
 │   │   │   ├── ActivityGrid.jsx     # Grid of dots for activity
-│   │   │   └── ActivitySection.jsx  # Complete activity section with label
+│   │   │   ├── ActivitySection.jsx  # Complete activity section with label
+│   │   │   └── ResizableWrapper.jsx # Resize/move/collision handling
 │   │   ├── hooks/
 │   │   │   ├── useActivities.js     # State & API integration
-│   │   │   └── useLayout.js         # Responsive layout logic
+│   │   │   ├── useLayout.js         # Responsive layout logic
+│   │   │   └── useBlockLayout.js    # Block resize/position state
 │   │   ├── App.jsx          # Main app component
 │   │   ├── config.js        # API configuration
 │   │   ├── constants.js     # App constants
