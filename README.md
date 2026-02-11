@@ -12,33 +12,45 @@ Track your progress across multiple activities:
 - **Games**: 5 plays
 - **Films**: 50 total (20 Cinema, 30 Home)
 
+Each activity displays a "last updated" timestamp showing when progress was last made.
+
 ## Tech Stack
 
 ### Frontend
-- **React** - UI framework
+- **React 19** - UI framework with hooks
 - **Vite** - Build tool and dev server
-- **Vanilla CSS** - Styling
+- **Vanilla CSS** - Styling with design system
 
 ### Backend
 - **Node.js** + **Express** - REST API server
-- **SQL.js** - SQLite database (in-process, file-based)
+- **Turso** - Cloud-hosted SQLite database (libsql)
 - **CORS** - Cross-origin resource sharing
 
 ## Project Structure
 
 ```
 year_tracker_2026/
-├── client/              # React frontend
+├── client/                  # React frontend
 │   ├── src/
-│   │   ├── components/  # Reusable UI components
-│   │   ├── hooks/       # Custom React hooks
-│   │   ├── App.jsx      # Main app component
-│   │   └── index.css    # Global styles
+│   │   ├── components/
+│   │   │   ├── Dot.jsx              # Individual clickable dot
+│   │   │   ├── ActivityGrid.jsx     # Grid of dots for activity
+│   │   │   └── ActivitySection.jsx  # Complete activity section with label
+│   │   ├── hooks/
+│   │   │   ├── useActivities.js     # State & API integration
+│   │   │   └── useLayout.js         # Responsive layout logic
+│   │   ├── App.jsx          # Main app component
+│   │   ├── config.js        # API configuration
+│   │   ├── constants.js     # App constants
+│   │   └── index.css        # Global styles
 │   └── package.json
-├── server/              # Node.js backend
-│   ├── routes/          # API routes
-│   ├── database.js      # Database configuration
-│   ├── index.js         # Express server
+├── server/                  # Node.js backend
+│   ├── db/
+│   │   └── database.js      # Turso database setup & queries
+│   ├── routes/
+│   │   └── activities.js    # API routes
+│   ├── index.js             # Express server
+│   ├── .env                 # Environment variables
 │   └── package.json
 └── README.md
 ```
@@ -48,6 +60,7 @@ year_tracker_2026/
 ### Prerequisites
 - Node.js v18+ installed
 - npm or yarn
+- Turso account (for database)
 
 ### Setup
 
@@ -59,7 +72,15 @@ year_tracker_2026/
    npm install
    ```
 
-3. **Install frontend dependencies:**
+3. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your Turso credentials:
+   # TURSO_DATABASE_URL=libsql://your-db.turso.io
+   # TURSO_AUTH_TOKEN=your-token
+   ```
+
+4. **Install frontend dependencies:**
    ```bash
    cd ../client
    npm install
@@ -87,13 +108,14 @@ The app will open at `http://localhost:5173`
 
 - `GET /api/activities` - Fetch all activity configurations
 - `GET /api/progress` - Fetch user progress
+- `GET /api/last-updated` - Fetch last updated timestamps per activity
 - `POST /api/progress` - Update progress (toggle dot)
   - Body: `{ activityKey, dotIndex, isFilled }`
 - `DELETE /api/progress/:activityKey/:dotIndex` - Delete specific progress
 
 ## Data Persistence
 
-Data is stored in an SQLite database (`server/tracker.db`). The database is automatically created and seeded with initial activities on first run.
+Data is stored in a Turso cloud SQLite database. The database is automatically created and seeded with initial activities on first run.
 
 ## Development
 
@@ -110,7 +132,7 @@ npm run build
 Outputs to `client/dist/`
 
 ### Backend
-The backend runs as-is in production. Just ensure `NODE_ENV=production` is set.
+The backend runs as-is in production. Just ensure environment variables are set.
 
 ## License
 

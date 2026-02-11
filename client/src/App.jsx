@@ -2,6 +2,7 @@ import { useActivities } from './hooks/useActivities';
 import { useLayout } from './hooks/useLayout';
 import { ActivityGrid } from './components/ActivityGrid';
 import { ActivitySection } from './components/ActivitySection';
+import { ResizableWrapper } from './components/ResizableWrapper';
 import './index.css';
 
 /**
@@ -28,6 +29,9 @@ function App() {
   // Handle responsive layout scaling
   useLayout();
 
+  // Check if mobile layout (disable resizing on mobile)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 1200;
+
   if (loading) {
     return <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>;
   }
@@ -52,6 +56,12 @@ function App() {
   const filmsLastUpdated = getLastUpdated('films-cinema');
   const filmsFormattedDate = formatDate(filmsLastUpdated);
 
+  // Handle layout changes (placeholder for localStorage persistence)
+  const handleLayoutChange = (blockId, type, data) => {
+    console.log('Layout changed:', blockId, type, data);
+    // TODO: Persist to localStorage
+  };
+
   return (
     <>
       <div className="header-bar">
@@ -73,18 +83,33 @@ function App() {
             updatedId="updated-training"
             lastUpdated={getLastUpdated('training')}
           />
+          <ResizableWrapper
+            blockId="training"
+            boxSelector="#box-training"
+            onLayoutChange={handleLayoutChange}
+            disabled={isMobile}
+          />
 
           {/* Films - Special layout with cinema zone */}
           <div id="name-films" className="name-block">films</div>
           <div id="box-films" className="circles-block">
-            <div className="cinema-zone" id="cinema-zone">
-              <svg className="cinema-border" viewBox="0 0 463 103" preserveAspectRatio="none" aria-hidden="true">
-                <rect x="1" y="1" width="461" height="101" rx="15" ry="15" fill="none" stroke="#555" strokeWidth="2" strokeDasharray="2 2" />
-              </svg>
-              {filmsCinema && (
+            <div className="films-inner" id="films-inner">
+              <div className="cinema-zone" id="cinema-zone">
+                <svg className="cinema-border" viewBox="0 0 463 103" preserveAspectRatio="none" aria-hidden="true">
+                  <rect x="1" y="1" width="461" height="101" rx="15" ry="15" fill="none" stroke="#555" strokeWidth="2" strokeDasharray="2 2" />
+                </svg>
+                {filmsCinema && (
+                  <ActivityGrid
+                    activity={filmsCinema}
+                    progress={progress[filmsCinema.key] || []}
+                    onToggle={toggleProgress}
+                  />
+                )}
+              </div>
+              {filmsHome && (
                 <ActivityGrid
-                  activity={filmsCinema}
-                  progress={progress[filmsCinema.key] || []}
+                  activity={filmsHome}
+                  progress={progress[filmsHome.key] || []}
                   onToggle={toggleProgress}
                 />
               )}
@@ -92,13 +117,6 @@ function App() {
             <span className="cinema-label" id="cinema-label">
               {getProgressCount('films-cinema')}/{filmsCinema?.count || 0} in the cinema
             </span>
-            {filmsHome && (
-              <ActivityGrid
-                activity={filmsHome}
-                progress={progress[filmsHome.key] || []}
-                onToggle={toggleProgress}
-              />
-            )}
           </div>
           <div id="text-films" className="meta-text">
             {filmsTotalProgress}/{filmsTotal}
@@ -108,6 +126,12 @@ function App() {
               updated on {filmsFormattedDate}
             </div>
           )}
+          <ResizableWrapper
+            blockId="films"
+            boxSelector="#box-films"
+            onLayoutChange={handleLayoutChange}
+            disabled={isMobile}
+          />
 
           {/* English */}
           <ActivitySection
@@ -120,6 +144,12 @@ function App() {
             textId="text-english"
             updatedId="updated-english"
             lastUpdated={getLastUpdated('english')}
+          />
+          <ResizableWrapper
+            blockId="english"
+            boxSelector="#box-english"
+            onLayoutChange={handleLayoutChange}
+            disabled={isMobile}
           />
 
           {/* Activities (Squash, Padel, etc) */}
@@ -137,6 +167,12 @@ function App() {
             updatedId="updated-activities"
             lastUpdated={getLastUpdated('squash')}
           />
+          <ResizableWrapper
+            blockId="activities"
+            boxSelector="#box-activities"
+            onLayoutChange={handleLayoutChange}
+            disabled={isMobile}
+          />
 
           {/* Books */}
           <ActivitySection
@@ -150,6 +186,12 @@ function App() {
             updatedId="updated-books"
             lastUpdated={getLastUpdated('books')}
           />
+          <ResizableWrapper
+            blockId="books"
+            boxSelector="#box-books"
+            onLayoutChange={handleLayoutChange}
+            disabled={isMobile}
+          />
 
           {/* Games */}
           <ActivitySection
@@ -162,6 +204,12 @@ function App() {
             textId="text-games"
             updatedId="updated-games"
             lastUpdated={getLastUpdated('games')}
+          />
+          <ResizableWrapper
+            blockId="games"
+            boxSelector="#box-games"
+            onLayoutChange={handleLayoutChange}
+            disabled={isMobile}
           />
 
         </div>
