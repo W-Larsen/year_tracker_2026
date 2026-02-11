@@ -51,6 +51,23 @@
   cursor: grabbing;
 }
 
+.resize-wrapper.collision {
+  outline: 3px solid #ff3333;
+  outline-offset: 2px;
+  background-color: rgba(255, 0, 0, 0.08);
+  animation: collision-pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes collision-pulse {
+  from {
+    outline-color: #ff3333;
+  }
+
+  to {
+    outline-color: #ff6666;
+  }
+}
+
 .resizable-content {
   position: relative;
   pointer-events: auto;

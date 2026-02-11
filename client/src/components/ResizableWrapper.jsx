@@ -43,6 +43,52 @@ const BASE_SIZES = {
     }
 };
 
+// All block IDs for collision detection
+const ALL_BLOCK_IDS = Object.keys(BASE_SIZES);
+
+// Get bounding rect for all visible elements of a block
+function getBlockRects(bid) {
+    const rects = [];
+    ['name', 'box', 'text', 'updated', 'subtitle'].forEach(key => {
+        const el = document.getElementById(`${key}-${bid}`);
+        if (el && el.offsetParent !== null) {
+            const style = window.getComputedStyle(el);
+            rects.push({
+                left: parseFloat(style.left) || 0,
+                top: parseFloat(style.top) || 0,
+                width: parseFloat(style.width) || el.offsetWidth,
+                height: parseFloat(style.height) || el.offsetHeight
+            });
+        }
+    });
+    return rects;
+}
+
+// Check if two rects overlap
+function rectsOverlap(a, b) {
+    return !(
+        a.left + a.width <= b.left ||
+        b.left + b.width <= a.left ||
+        a.top + a.height <= b.top ||
+        b.top + b.height <= a.top
+    );
+}
+
+// Check if any rect from blockA overlaps any rect from other blocks
+function checkCollision(currentBlockId) {
+    const currentRects = getBlockRects(currentBlockId);
+    for (const otherId of ALL_BLOCK_IDS) {
+        if (otherId === currentBlockId) continue;
+        const otherRects = getBlockRects(otherId);
+        for (const cr of currentRects) {
+            for (const or2 of otherRects) {
+                if (rectsOverlap(cr, or2)) return true;
+            }
+        }
+    }
+    return false;
+}
+
 /**
  * ResizableWrapper - A simple overlay that adds resize and move handles to activity blocks
  */
@@ -58,9 +104,12 @@ export function ResizableWrapper({
     const [resizeCorner, setResizeCorner] = useState(null);
     // Track current scale (starts at 1)
     const [currentScale, setCurrentScale] = useState(1);
+    const [hasCollision, setHasCollision] = useState(false);
 
     const wrapperRef = useRef(null);
-    const startRef = useRef({ x: 0, y: 0, startBox: null });
+    const startRef = useRef(null);
+    // Store saved state for revert on collision
+    const savedStateRef = useRef(null);
 
     // Get base sizes for this block
     const baseSizes = BASE_SIZES[blockId] || {};
@@ -97,11 +146,53 @@ export function ResizableWrapper({
         };
     }, [syncPosition, getBoxElement]);
 
+    // Save current state of all elements for potential revert
+    const saveCurrentState = useCallback(() => {
+        const state = {};
+        ['name', 'box', 'text', 'updated', 'subtitle'].forEach(key => {
+            const el = document.getElementById(`${key}-${blockId}`);
+            if (el) {
+                state[key] = el.getAttribute('style') || '';
+            }
+        });
+        // Also save cinema-label for films
+        if (blockId === 'films') {
+            const cl = document.getElementById('cinema-label');
+            if (cl) state['cinema-label'] = cl.getAttribute('style') || '';
+            const fi = document.getElementById('films-inner');
+            if (fi) state['films-inner'] = fi.getAttribute('style') || '';
+        }
+        state._scale = currentScale;
+        savedStateRef.current = state;
+    }, [blockId, currentScale]);
+
+    // Restore saved state
+    const restoreSavedState = useCallback(() => {
+        if (!savedStateRef.current) return;
+        const state = savedStateRef.current;
+        ['name', 'box', 'text', 'updated', 'subtitle'].forEach(key => {
+            const el = document.getElementById(`${key}-${blockId}`);
+            if (el && state[key] !== undefined) {
+                el.setAttribute('style', state[key]);
+            }
+        });
+        if (blockId === 'films') {
+            const cl = document.getElementById('cinema-label');
+            if (cl && state['cinema-label'] !== undefined) cl.setAttribute('style', state['cinema-label']);
+            const fi = document.getElementById('films-inner');
+            if (fi && state['films-inner'] !== undefined) fi.setAttribute('style', state['films-inner']);
+        }
+        if (state._scale !== undefined) setCurrentScale(state._scale);
+        savedStateRef.current = null;
+    }, [blockId]);
+
     // Handle resize start
     const handleResizeStart = useCallback((e, corner) => {
         if (disabled) return;
         e.preventDefault();
         e.stopPropagation();
+
+        saveCurrentState();
 
         const boxEl = document.getElementById(`box-${blockId}`);
         if (!boxEl) return;
@@ -121,7 +212,8 @@ export function ResizableWrapper({
 
         setIsResizing(true);
         setResizeCorner(corner);
-    }, [disabled, blockId, currentScale]);
+        setHasCollision(false);
+    }, [disabled, blockId, currentScale, saveCurrentState]);
 
     // Handle drag start
     const handleDragStart = useCallback((e) => {
@@ -129,6 +221,8 @@ export function ResizableWrapper({
         if (e.target.closest('.resize-handle')) return;
 
         e.preventDefault();
+
+        saveCurrentState();
 
         // Get current positions of all elements
         const elements = ['name', 'box', 'text', 'updated', 'subtitle'];
@@ -151,7 +245,8 @@ export function ResizableWrapper({
         };
 
         setIsDragging(true);
-    }, [disabled, isResizing, blockId]);
+        setHasCollision(false);
+    }, [disabled, isResizing, blockId, saveCurrentState]);
 
     // Handle mouse move
     useEffect(() => {
@@ -172,6 +267,10 @@ export function ResizableWrapper({
                     }
                 });
                 syncPosition();
+
+                // Check for collision during drag
+                const colliding = checkCollision(blockId);
+                setHasCollision(colliding);
             } else if (isResizing && resizeCorner) {
                 const { startBox, startScale } = startRef.current;
                 const baseBox = baseSizes.box;
@@ -324,6 +423,10 @@ export function ResizableWrapper({
                 syncPosition();
                 setCurrentScale(scale);
 
+                // Check for collision during resize
+                const colliding = checkCollision(blockId);
+                setHasCollision(colliding);
+
                 if (onLayoutChange) {
                     onLayoutChange(blockId, 'resize', {
                         left: newLeft,
@@ -337,6 +440,12 @@ export function ResizableWrapper({
         };
 
         const handleMouseUp = () => {
+            // If collision detected, revert to saved state
+            if (checkCollision(blockId)) {
+                restoreSavedState();
+                syncPosition();
+            }
+            setHasCollision(false);
             setIsDragging(false);
             setIsResizing(false);
             setResizeCorner(null);
@@ -349,14 +458,15 @@ export function ResizableWrapper({
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [isDragging, isResizing, resizeCorner, blockId, syncPosition, onLayoutChange, baseSizes]);
+    }, [isDragging, isResizing, resizeCorner, blockId, syncPosition, onLayoutChange, baseSizes, restoreSavedState]);
 
     const wrapperClasses = [
         'resize-wrapper',
         isHovering && 'hovering',
         isDragging && 'dragging',
         isResizing && 'resizing',
-        disabled && 'disabled'
+        disabled && 'disabled',
+        hasCollision && 'collision'
     ].filter(Boolean).join(' ');
 
     return (
