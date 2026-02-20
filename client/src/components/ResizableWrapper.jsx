@@ -155,7 +155,13 @@ export function ResizableWrapper({
                 state[key] = el.getAttribute('style') || '';
             }
         });
-        // Also save cinema-label for films
+        // Save grid-container transform (regular blocks)
+        const boxEl = document.getElementById(`box-${blockId}`);
+        if (boxEl) {
+            const gridContainer = boxEl.querySelector('.grid-container');
+            if (gridContainer) state['grid-container'] = gridContainer.getAttribute('style') || '';
+        }
+        // Also save cinema-label and films-inner for films
         if (blockId === 'films') {
             const cl = document.getElementById('cinema-label');
             if (cl) state['cinema-label'] = cl.getAttribute('style') || '';
@@ -176,6 +182,12 @@ export function ResizableWrapper({
                 el.setAttribute('style', state[key]);
             }
         });
+        // Restore grid-container transform
+        const boxEl = document.getElementById(`box-${blockId}`);
+        if (boxEl && state['grid-container'] !== undefined) {
+            const gridContainer = boxEl.querySelector('.grid-container');
+            if (gridContainer) gridContainer.setAttribute('style', state['grid-container']);
+        }
         if (blockId === 'films') {
             const cl = document.getElementById('cinema-label');
             if (cl && state['cinema-label'] !== undefined) cl.setAttribute('style', state['cinema-label']);
